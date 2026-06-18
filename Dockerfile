@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1
 
 ##########################################################################
-# Stage 1 - build the launcher.war with Maven (JDK 8) + Node frontend
+# Stage 1 - build the launcher.war with Maven (JDK 11) + Node frontend
+#   JDK 11 is required: the notification module depends on ActiveMQ 5.18 which is
+#   compiled for Java 11. The POM still targets Java 8 bytecode (source/target 1.8).
 ##########################################################################
-FROM maven:3.9-eclipse-temurin-8 AS build
+FROM maven:3.9-eclipse-temurin-11 AS build
 
 # git is required by the frontend build (npm/grunt) tooling pulled in by
 # the frontend-maven-plugin; build-essential/python3 cover any native npm deps.
@@ -20,9 +22,9 @@ RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -e -DskipTests clean install
 
 ##########################################################################
-# Stage 2 - runtime: Tomcat 9 (JDK 8) serving the app at the ROOT context
+# Stage 2 - runtime: Tomcat 9 (JDK 11) serving the app at the ROOT context
 ##########################################################################
-FROM tomcat:9.0-jdk8-temurin-jammy
+FROM tomcat:9.0-jdk11-temurin-jammy
 
 # postgresql-client is used by the entrypoint to seed initial data.
 # aapt is referenced by the server config (aapt.command); current code uses a
