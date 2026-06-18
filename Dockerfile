@@ -18,6 +18,12 @@ WORKDIR /src
 # Copy the whole source tree and build. Tests are skipped here (they need a
 # live PostgreSQL); run them in a separate CI job if desired.
 COPY . .
+
+# build.properties is gitignored (only the .example is committed) but the server
+# module's resource filtering requires it. These are build-time values; the
+# runtime Tomcat context.xml (rendered by the entrypoint) overrides them.
+RUN cp server/build.properties.example server/build.properties
+
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -e -DskipTests clean install
 
