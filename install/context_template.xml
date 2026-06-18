@@ -48,7 +48,6 @@
 
     <!-- MQTT notification service parameters -->
     <Parameter name="mqtt.server.uri" value="_BASE_DOMAIN_:31000"/>
-    <Parameter name="mqtt.external" value="0"/>
 
     <!-- Optional tag for delaying MQTT messages in milliseconds
      to avoid congestion when all devices are updating configuration at the same time -->
