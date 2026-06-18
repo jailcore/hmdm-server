@@ -8,16 +8,18 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+# Pushes to Google Artifact Registry (gcr.io host) using keyless Workload
+# Identity Federation. The provider, service account, and image name come from
+# repo variables set during setup (see scripts/gcp-wif-setup.sh) — no secrets.
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}   # jailcore/hmdm-server
+  IMAGE_NAME: ${{ vars.GCP_IMAGE }}   # gcr.io/geometric-vim-215500/hmdm-server
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write   # required to push to GHCR
+      id-token: write   # required for Workload Identity Federation (OIDC)
 
     steps:
       - name: Checkout
@@ -26,20 +28,29 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Only log in when we intend to push (skip for pull_request builds)
-      - name: Log in to GitHub Container Registry
+      # Only authenticate to Google when we intend to push (skip for PR builds).
+      - name: Authenticate to Google Cloud
+        id: auth
+        if: github.event_name != 'pull_request'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Log in to Artifact Registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
       - name: Extract image metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr

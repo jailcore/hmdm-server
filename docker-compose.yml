@@ -23,7 +23,7 @@ services:
   server:
     build: .
     # Or pull the published image instead of building:
-    # image: ghcr.io/jailcore/hmdm-server:latest
+    # image: gcr.io/geometric-vim-215500/hmdm-server:latest
     depends_on:
       db:
         condition: service_healthy
