@@ -1,0 +1,27 @@
+# VCS
+.git
+.gitignore
+
+# Build output (regenerated inside the image)
+**/target
+**/webtarget/node
+**/node_modules
+**/bower_components
+server/src/main/webapp/lib
+
+# Packaged artifacts
+*.war
+
+# IDE
+.idea
+*.iml
+
+# Logs / local runtime
+logs
+**/logs
+
+# CI / docker meta (not needed in the build context)
+.github
+docker-compose.yml
+README.md
+*.md

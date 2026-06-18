@@ -1,0 +1,47 @@
+# Local run / smoke-test of the Headwind MDM server image.
+#
+#   docker compose up --build
+#   open http://localhost:8080   (default login: admin / admin)
+#
+# For production, point DB_* at a managed PostgreSQL and set HMDM_PROTOCOL /
+# HMDM_BASE_HOST / HMDM_BASE_DOMAIN / HMDM_HASH_SECRET to real values.
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hmdm
+      POSTGRES_USER: hmdm
+      POSTGRES_PASSWORD: topsecret
+    volumes:
+      - hmdm-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hmdm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: .
+    # Or pull the published image instead of building:
+    # image: ghcr.io/jailcore/hmdm-server:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: hmdm
+      DB_USER: hmdm
+      DB_PASSWORD: topsecret
+      HMDM_PROTOCOL: http
+      HMDM_BASE_HOST: localhost:8080
+      HMDM_BASE_DOMAIN: localhost
+      HMDM_HASH_SECRET: changeme-C3z9vi54
+    ports:
+      - "8080:8080"
+    volumes:
+      - hmdm-data:/opt/hmdm
+
+volumes:
+  hmdm-db:
+  hmdm-data:
